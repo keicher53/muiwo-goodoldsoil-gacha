@@ -52,7 +52,7 @@
       </div>
 
       <button id="draw-btn">抽卡</button>
-      <button id="save-btn" hidden>儲存卡面</button>
+      <button id="save-btn" hidden>下載原相</button>
       <p id="hint" class="hint"></p>
 
       <footer class="footer">
@@ -80,11 +80,9 @@
     </main>
   </section>
 
-  <!-- 隱藏嘅上傳 input -->
   <input type="file" id="upload-input" accept="image/*" hidden />
 
-  <!-- 使用 dom-to-image 確保截圖穩定 -->
-  <script src="https://cdn.jsdelivr.net/npm/dom-to-image@2.6.0/dist/dom-to-image.min.js"></script>
+  <!-- 只需要 script.js，唔需要截圖 library -->
   <script src="script.js"></script>
 </body>
 </html>
