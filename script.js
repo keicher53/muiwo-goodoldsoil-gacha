@@ -109,7 +109,7 @@ function renderCard(card) {
 // ---------- 抽卡（每次載入一次） ----------
 function drawCard() {
   if (hasDrawnThisLoad) {
-    hint.textContent = '今次已經抽過，重新載入就可以再抽。';
+    hint.textContent = '每人限抽一張，多謝支持梅窩好老土！';
     return;
   }
 
@@ -118,8 +118,8 @@ function drawCard() {
   hasDrawnThisLoad = true;
 
   drawBtn.disabled = true;
-  drawBtn.textContent = '重新載入再抽';
-  hint.textContent = '想再抽？重新載入頁面或再掃 QR code 啦！';
+  drawBtn.textContent = '已抽卡';
+  hint.textContent = '每人限抽一張，想再抽請再掃 QR code。';
 }
 
 // ---------- 儲存卡面 ----------
