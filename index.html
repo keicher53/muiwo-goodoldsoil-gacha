@@ -93,7 +93,8 @@
   <!-- 隱藏嘅上傳 input -->
   <input type="file" id="upload-input" accept="image/*" hidden />
 
-  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <!-- 用 dom-to-image 代替 html2canvas，儲存更穩定 -->
+  <script src="https://cdn.jsdelivr.net/npm/dom-to-image@2.6.0/dist/dom-to-image.min.js"></script>
   <script src="script.js"></script>
 </body>
 </html>
