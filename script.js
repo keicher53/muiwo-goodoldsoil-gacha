@@ -20,6 +20,7 @@ const CASE_STORE = 'caseImages';
 let cards = [];
 let currentSlotIndex = null;
 let hasDrawnThisLoad = false;
+let currentCard = null; // 記住今次抽到嘅卡
 
 const RARITY_LABEL = {
   common: '普通',
@@ -114,6 +115,7 @@ function drawCard() {
   }
 
   const card = cards[Math.floor(Math.random() * cards.length)];
+  currentCard = card;
   renderCard(card);
   hasDrawnThisLoad = true;
 
@@ -122,7 +124,7 @@ function drawCard() {
   hint.textContent = '每人限抽一張，想再抽請再掃 QR code。';
 }
 
-// ---------- 儲存卡面 ----------
+// ---------- 儲存卡面（高解析度） ----------
 saveBtn.addEventListener('click', async () => {
   const cardEl = document.getElementById('card-to-save');
   if (!cardEl) return;
@@ -138,7 +140,13 @@ saveBtn.addEventListener('click', async () => {
       )
     );
 
-    const canvas = await html2canvas(cardEl, { scale: 3, backgroundColor: '#f5efe2', useCORS: true });
+    // scale 5 = 高解析度輸出，更接近原相
+    const canvas = await html2canvas(cardEl, {
+      scale: 5,
+      backgroundColor: '#f5efe2',
+      useCORS: true
+    });
+
     const dataUrl = canvas.toDataURL('image/png');
     const fileName = `梅窩好老土-${Date.now()}.png`;
 
@@ -163,6 +171,28 @@ saveBtn.addEventListener('click', async () => {
     hint.textContent = '儲存失敗，可以長按卡面試吓手動儲存。';
   }
 });
+
+// ---------- 儲存原相（如果卡有圖） ----------
+// 呢個功能用一個隱藏掣，你可以喺 index.html 加：
+// <button id="save-original-btn" hidden>儲存原相</button>
+const saveOriginalBtn = document.getElementById('save-original-btn');
+if (saveOriginalBtn) {
+  saveOriginalBtn.addEventListener('click', () => {
+    if (!currentCard || !currentCard.image) {
+      hint.textContent = '呢張卡冇原相可以儲存。';
+      return;
+    }
+
+    const link = document.createElement('a');
+    link.href = currentCard.image;
+    link.download = `梅窩好老土-原相-${Date.now()}`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    hint.textContent = '原相已儲存。';
+  });
+}
 
 // ---------- 展示櫃 ----------
 function addSlotToCase(container, index, dataUrl) {
