@@ -20,7 +20,7 @@ const CASE_STORE = 'caseImages';
 let cards = [];
 let currentSlotIndex = null;
 let hasDrawnThisLoad = false;
-let currentCard = null; // 記住今次抽到嘅卡
+let currentCard = null;
 
 const RARITY_LABEL = {
   common: '普通',
@@ -92,7 +92,7 @@ async function loadCards() {
 // ---------- 抽卡頁 ----------
 function renderCard(card) {
   const imgHtml = card.image
-    ? `<img src="${card.image}" alt="${card.name}" onerror="this.parentElement.innerHTML='<span class=\\'placeholder\\'>${card.emoji || '🍺'}</span>'">`
+    ? `<img src="${card.image}" alt="${card.name}" crossorigin="anonymous" onerror="this.parentElement.innerHTML='<span class=\\'placeholder\\'>${card.emoji || '🍺'}</span>'">`
     : `<span class="placeholder">${card.emoji || '🍺'}</span>`;
 
   cardArea.innerHTML = `
@@ -107,7 +107,7 @@ function renderCard(card) {
   saveBtn.hidden = false;
 }
 
-// ---------- 抽卡（每次載入一次） ----------
+// ---------- 抽卡 ----------
 function drawCard() {
   if (hasDrawnThisLoad) {
     hint.textContent = '每人限抽一張，多謝支持梅窩好老土！';
@@ -124,7 +124,7 @@ function drawCard() {
   hint.textContent = '每人限抽一張，想再抽請再掃 QR code。';
 }
 
-// ---------- 儲存卡面（高解析度） ----------
+// ---------- 儲存卡面（dom-to-image 穩定版） ----------
 saveBtn.addEventListener('click', async () => {
   const cardEl = document.getElementById('card-to-save');
   if (!cardEl) return;
@@ -133,21 +133,32 @@ saveBtn.addEventListener('click', async () => {
   saveBtn.textContent = '儲存中…';
 
   try {
+    // 確保所有圖片載入完成
     const images = cardEl.querySelectorAll('img');
     await Promise.all(
-      [...images].map(img =>
-        img.complete ? Promise.resolve() : new Promise(r => { img.onload = r; img.onerror = r; })
-      )
+      [...images].map(img => {
+        if (img.complete && img.naturalHeight !== 0) return Promise.resolve();
+        return new Promise(resolve => {
+          img.onload = resolve;
+          img.onerror = resolve;
+        });
+      })
     );
 
-    // scale 5 = 高解析度輸出，更接近原相
-    const canvas = await html2canvas(cardEl, {
-      scale: 5,
-      backgroundColor: '#f5efe2',
-      useCORS: true
+    // 等一陣，確保 layout 穩定
+    await new Promise(r => setTimeout(r, 150));
+
+    const dataUrl = await domtoimage.toPng(cardEl, {
+      bgcolor: '#f5efe2',
+      quality: 1,
+      width: cardEl.offsetWidth * 4,
+      height: cardEl.offsetHeight * 4,
+      style: {
+        transform: 'scale(4)',
+        transformOrigin: 'top left'
+      }
     });
 
-    const dataUrl = canvas.toDataURL('image/png');
     const fileName = `梅窩好老土-${Date.now()}.png`;
 
     const link = document.createElement('a');
@@ -168,31 +179,9 @@ saveBtn.addEventListener('click', async () => {
     console.error(e);
     saveBtn.disabled = false;
     saveBtn.textContent = '儲存卡面';
-    hint.textContent = '儲存失敗，可以長按卡面試吓手動儲存。';
+    hint.textContent = '儲存失敗，請長按卡面手動儲存。';
   }
 });
-
-// ---------- 儲存原相（如果卡有圖） ----------
-// 呢個功能用一個隱藏掣，你可以喺 index.html 加：
-// <button id="save-original-btn" hidden>儲存原相</button>
-const saveOriginalBtn = document.getElementById('save-original-btn');
-if (saveOriginalBtn) {
-  saveOriginalBtn.addEventListener('click', () => {
-    if (!currentCard || !currentCard.image) {
-      hint.textContent = '呢張卡冇原相可以儲存。';
-      return;
-    }
-
-    const link = document.createElement('a');
-    link.href = currentCard.image;
-    link.download = `梅窩好老土-原相-${Date.now()}`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
-    hint.textContent = '原相已儲存。';
-  });
-}
 
 // ---------- 展示櫃 ----------
 function addSlotToCase(container, index, dataUrl) {
