@@ -20,7 +20,7 @@ const CASE_STORE = 'caseImages';
 let cards = [];
 let currentSlotIndex = null;
 let hasDrawnThisLoad = false;
-let currentCard = null; // 記住抽到咩卡，用嚟下載原相
+let currentCard = null;
 
 const RARITY_LABEL = {
   common: '普通',
@@ -115,7 +115,7 @@ function drawCard() {
   }
 
   const card = cards[Math.floor(Math.random() * cards.length)];
-  currentCard = card; // 記錄低今次抽到邊張
+  currentCard = card;
   renderCard(card);
   hasDrawnThisLoad = true;
 
@@ -124,13 +124,12 @@ function drawCard() {
   hint.textContent = '每人限抽一張，想再抽請再掃 QR code。';
 }
 
-// ---------- 直接下載原相（保證原封不動） ----------
+// ---------- 下載卡片（保證原封不動） ----------
 saveBtn.addEventListener('click', async () => {
   if (!currentCard) return;
 
-  // 如果張卡根本冇設定圖片（只有 emoji），就提提佢
   if (!currentCard.image) {
-    hint.textContent = '呢張卡冇原相可以下載。';
+    hint.textContent = '呢張卡冇圖片可以下載。';
     return;
   }
 
@@ -138,16 +137,13 @@ saveBtn.addEventListener('click', async () => {
   saveBtn.textContent = '下載中…';
 
   try {
-    // 用 fetch 攞張原相
     const response = await fetch(currentCard.image);
     const blob = await response.blob();
-    
-    // 建立一個虛擬網址下載
     const blobUrl = URL.createObjectURL(blob);
     
-    // 獲取原本嘅檔案格式（例如 jpg, png）
     const extension = currentCard.image.split('.').pop() || 'jpg';
-    const fileName = `梅窩好老土-原相-${Date.now()}.${extension}`;
+    // 刪走「原相」字眼，直接用卡名同時間做檔案名
+    const fileName = `${currentCard.name}-${Date.now()}.${extension}`;
 
     const link = document.createElement('a');
     link.href = blobUrl;
@@ -155,31 +151,28 @@ saveBtn.addEventListener('click', async () => {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    
-    // 釋放記憶體
     URL.revokeObjectURL(blobUrl);
 
     saveBtn.textContent = '已下載！';
-    hint.textContent = '原相已直接下載，去相簿睇吓啦。';
+    hint.textContent = '卡片已下載，去相簿睇吓啦。';
 
     setTimeout(() => {
       saveBtn.disabled = false;
-      saveBtn.textContent = '下載原相';
+      saveBtn.textContent = '下載卡片'; // 改做下載卡片
     }, 3000);
   } catch (error) {
     console.error('下載失敗:', error);
-    // 如果因為跨域問題 fetch 唔到，退而求其次用最基本嘅 a tag 下載
     const link = document.createElement('a');
     link.href = currentCard.image;
-    link.download = `梅窩好老土-原相-${Date.now()}.jpg`;
+    link.download = `${currentCard.name}-${Date.now()}.jpg`; // 後備方案都刪走原相字眼
     link.target = '_blank';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
 
     saveBtn.disabled = false;
-    saveBtn.textContent = '下載原相';
-    hint.textContent = '已嘗試開啟原相，請長按圖片儲存。';
+    saveBtn.textContent = '下載卡片'; // 改做下載卡片
+    hint.textContent = '已嘗試開啟圖片，請長按圖片儲存。';
   }
 });
 
