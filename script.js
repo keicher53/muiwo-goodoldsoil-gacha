@@ -14,14 +14,12 @@ const drawBtn = document.getElementById('draw-btn');
 const saveBtn = document.getElementById('save-btn');
 const hint = document.getElementById('hint');
 
-const STORAGE_KEY = 'meiwo_beer_card_id';
-const COOKIE_KEY = 'meiwo_beer_drawn';
 const DB_NAME = 'meiwoGachaDB';
-const DB_STORE = 'draws';
 const CASE_STORE = 'caseImages';
 
 let cards = [];
 let currentSlotIndex = null;
+let hasDrawnThisLoad = false;
 
 const RARITY_LABEL = {
   common: '普通',
@@ -29,26 +27,12 @@ const RARITY_LABEL = {
   legendary: '傳說'
 };
 
-// ---------- Cookie ----------
-function setCookie(name, value, days = 3650) {
-  const d = new Date();
-  d.setTime(d.getTime() + days * 24 * 60 * 60 * 1000);
-  document.cookie = `${name}=${encodeURIComponent(value)};expires=${d.toUTCString()};path=/;SameSite=Lax`;
-}
-function getCookie(name) {
-  const m = document.cookie.match(new RegExp('(^|;\\s*)' + name + '=([^;]*)'));
-  return m ? decodeURIComponent(m[2]) : null;
-}
-
-// ---------- IndexedDB ----------
+// ---------- IndexedDB（收藏相片） ----------
 function openDB() {
   return new Promise((resolve, reject) => {
     const req = indexedDB.open(DB_NAME, 2);
     req.onupgradeneeded = () => {
       const db = req.result;
-      if (!db.objectStoreNames.contains(DB_STORE)) {
-        db.createObjectStore(DB_STORE);
-      }
       if (!db.objectStoreNames.contains(CASE_STORE)) {
         db.createObjectStore(CASE_STORE);
       }
@@ -98,25 +82,6 @@ async function idbDelete(store, key) {
   });
 }
 
-// ---------- 已抽記錄 ----------
-async function getDrawnId() {
-  const ls = localStorage.getItem(STORAGE_KEY);
-  if (ls) return ls;
-  const ck = getCookie(COOKIE_KEY);
-  if (ck) return ck;
-  try {
-    const idb = await idbGet(DB_STORE, STORAGE_KEY);
-    if (idb) return idb;
-  } catch (e) {}
-  return null;
-}
-
-async function saveDrawnId(id) {
-  localStorage.setItem(STORAGE_KEY, id);
-  setCookie(COOKIE_KEY, id);
-  try { await idbSet(DB_STORE, STORAGE_KEY, id); } catch (e) {}
-}
-
 // ---------- 卡池 ----------
 async function loadCards() {
   const res = await fetch('cards.json');
@@ -141,25 +106,20 @@ function renderCard(card) {
   saveBtn.hidden = false;
 }
 
-function lockDraw() {
-  drawBtn.disabled = true;
-  drawBtn.textContent = '你已抽過卡';
-  hint.textContent = '每部裝置限抽一張，多謝支持梅窩好老土爽皮啤酒！';
-}
-
-async function drawCard() {
-  const already = await getDrawnId();
-  if (already) {
-    const card = cards.find(c => c.id === already);
-    if (card) renderCard(card);
-    lockDraw();
+// ---------- 抽卡（每次載入一次） ----------
+function drawCard() {
+  if (hasDrawnThisLoad) {
+    hint.textContent = '今次已經抽過，重新載入就可以再抽。';
     return;
   }
 
   const card = cards[Math.floor(Math.random() * cards.length)];
-  await saveDrawnId(card.id);
   renderCard(card);
-  lockDraw();
+  hasDrawnThisLoad = true;
+
+  drawBtn.disabled = true;
+  drawBtn.textContent = '重新載入再抽';
+  hint.textContent = '想再抽？重新載入頁面或再掃 QR code 啦！';
 }
 
 // ---------- 儲存卡面 ----------
@@ -312,17 +272,9 @@ async function init() {
     return;
   }
 
-  const drawnId = await getDrawnId();
-  if (drawnId) {
-    const card = cards.find(c => c.id === drawnId);
-    if (card) {
-      renderCard(card);
-      lockDraw();
-      return;
-    }
-  }
-
+  hasDrawnThisLoad = false;
   drawBtn.disabled = false;
+  drawBtn.textContent = '抽卡';
 }
 
 drawBtn.addEventListener('click', () => {
