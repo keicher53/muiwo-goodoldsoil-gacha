@@ -93,7 +93,7 @@ async function loadCards() {
 function renderCard(card) {
   const imgHtml = card.image
     ? `<img src="${card.image}" alt="${card.name}" crossorigin="anonymous" onerror="this.parentElement.innerHTML='<span class=\\'placeholder\\'>${card.emoji || '🍺'}</span>'">`
-    : `<span class="placeholder">${card.emoji || '🍺'}</span>`;
+    : `<span class="placeholder" style="font-size: 5rem;">${card.emoji || '🍺'}</span>`;
 
   cardArea.innerHTML = `
     <div class="card card-front rarity-${card.rarity}" id="card-to-save">
@@ -107,7 +107,7 @@ function renderCard(card) {
   saveBtn.hidden = false;
 }
 
-// ---------- 抽卡 ----------
+// ---------- 抽卡（每次載入一次） ----------
 function drawCard() {
   if (hasDrawnThisLoad) {
     hint.textContent = '每人限抽一張，多謝支持梅窩好老土！';
@@ -124,7 +124,7 @@ function drawCard() {
   hint.textContent = '每人限抽一張，想再抽請再掃 QR code。';
 }
 
-// ---------- 儲存卡面（dom-to-image 穩定版） ----------
+// ---------- 儲存卡面（dom-to-image） ----------
 saveBtn.addEventListener('click', async () => {
   const cardEl = document.getElementById('card-to-save');
   if (!cardEl) return;
@@ -133,7 +133,6 @@ saveBtn.addEventListener('click', async () => {
   saveBtn.textContent = '儲存中…';
 
   try {
-    // 確保所有圖片載入完成
     const images = cardEl.querySelectorAll('img');
     await Promise.all(
       [...images].map(img => {
@@ -145,18 +144,12 @@ saveBtn.addEventListener('click', async () => {
       })
     );
 
-    // 等一陣，確保 layout 穩定
-    await new Promise(r => setTimeout(r, 150));
+    await new Promise(r => setTimeout(r, 200));
 
+    // 使用 domtoimage 截圖
     const dataUrl = await domtoimage.toPng(cardEl, {
       bgcolor: '#f5efe2',
-      quality: 1,
-      width: cardEl.offsetWidth * 4,
-      height: cardEl.offsetHeight * 4,
-      style: {
-        transform: 'scale(4)',
-        transformOrigin: 'top left'
-      }
+      quality: 1
     });
 
     const fileName = `梅窩好老土-${Date.now()}.png`;
