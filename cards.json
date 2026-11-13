@@ -3,7 +3,6 @@
     "id": "beer01",
     "name": "爽皮啤酒 · 開心",
     "rarity": "common",
-    "emoji": "😄",
     "image": "images/beer01.jpg",
     "text": "飲一啖，笑到見牙唔見眼。梅窩好老土，爽皮到開心晒。"
   },
@@ -11,7 +10,6 @@
     "id": "beer02",
     "name": "爽皮啤酒 · 生氣",
     "rarity": "rare",
-    "emoji": "😠",
     "image": "images/beer02.jpg",
     "text": "老土到有啲火，飲落又忍唔住笑。嬲住爽皮，先夠梅窩。"
   },
@@ -19,7 +17,6 @@
     "id": "beer03",
     "name": "爽皮啤酒 · 感動流淚",
     "rarity": "rare",
-    "emoji": "🥹",
     "image": "images/beer03.jpg",
     "text": "一啖落肚，感動到眼濕濕。老土情懷，飲得出。"
   },
@@ -27,7 +24,6 @@
     "id": "beer04",
     "name": "爽皮啤酒 · 再來一個",
     "rarity": "legendary",
-    "emoji": "😋",
     "image": "images/beer04.jpg",
     "text": "飲完一杯，個樣就係「再來一個」。梅窩好老土，爽皮到唔捨得停。"
   }
